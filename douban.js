@@ -8,29 +8,43 @@ http://movie.douban.com/subject/7065154/
 
 var urllib = require('urllib');
 var fs = require('fs');
+var EventEmitter = require('events').EventEmitter;
+var cheerio = require('cheerio');
+
+function retry_request(url, options, times, callback) {
+    var count = 0;
+    var OK = new EventEmitter();
+    urllib.request(url, options, function cb(err, data, res){
+        count++;
+        if (count > times) {
+            callback(null);  // if not succeed, pass back null
+            return;
+        }
+        if (err)  {
+            console.log(err);
+            urllib.request(url, options, cb);
+        } else if (res.statusCode === 200) {
+            OK.emit('ok', {'data': data, 'res': res});
+        } else {
+            console.log(res.statusCode);
+            urllib.request(url, options, cb);
+        }
+    });
+    OK.on('ok', function(params){
+        callback(params.data, params.res);
+    });
+}
 
 function Searcher(query) {
     this.query = query;    // query is an object
-    this.movieId = null;
 }
 
-Searcher.prototype.search = function() {
-    var that = this;
-    urllib.request("http://api.douban.com/v2/movie/search", {
+Searcher.prototype.search = function(cb) {
+    retry_request("http://api.douban.com/v2/movie/search", {
         data: {'q': this.query, 'count': 1},
         dataType: 'json'
-    }, function(err, data, res) {
-        if (err) {
-            console.log("error: ", err);
-            return false;
-        } else if (res.statusCode === 200) {
-            that.id = data.subjects[0].id;
-            console.log('id:', that.movieId);
-            return true;
-        } else {
-            console.log("status code: ", res.statusCode);
-            return false;
-        }
+    }, 3, function(data) {
+        cb(data.subjects[0].id);  // pass back movieid
     });
 };
 
@@ -38,17 +52,33 @@ function Fetcher(movidId) {
     this.movieId = movidId;
 }
 
-Fetcher.prototype.fetch = function() {
-    urllib.request("http://movie.douban.com/subject/"+this.movieId+'/', function(err, data, res){
-        if (res.statusCode === 200)
-            fs.writeFileSync('movie.html', data);
-        else {
-            console.log(res);
-        }
+Fetcher.prototype.fetch = function(callback) {
+    retry_request("http://movie.douban.com/subject/"+this.movieId+'/', {}, 3, function(data){
+        var $ = cheerio.load(data.toString());
+        var img = $('img[src^="http://img3.douban.com/view/movie_poster_cover/spst/public/"]')[0];
+        console.log(img.attribs.src);
+        retry_request(img.attribs.src, {}, 3, function(data){
+            callback(data);     // pass back image buffer
+        });
     });
 };
 
+function fetchMoviePoster(searchText, callback) {
+    /*
+    目前仅针对电影, 之后可以把动漫加上
+    抓取失败, callback(null)
+    抓取成功, callback(image_buffer)
+     */
+    var s = new Searcher(searchText);
+    s.search(function(movieId){
+        if (!movieId) {
+            callback(null);
+        } else {
+            var f = new Fetcher(movieId);
+            f.fetch(callback);
+        }
+    });
+}
 
-exports.Searcher = Searcher;
-exports.Fetcher = Fetcher;
+exports.fetchMoviePoster = fetchMoviePoster;
 

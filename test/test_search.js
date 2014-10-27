@@ -1,8 +1,10 @@
-var Searcher = require('../douban').Searcher;
-var Fetcher = require('../douban').Fetcher;
+var fetchMoviePoster = require('../douban').fetchMoviePoster;
+var fs = require('fs');
 
-
-var s = new Searcher('解决解决的');
-
-var f = new Fetcher("7065154");
-f.fetch();
+fetchMoviePoster("南京", function(data){
+    if (data)
+        fs.writeFileSync('poster.jpg', data);
+    else {
+        console.log("fetch failed");
+    }
+});

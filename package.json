@@ -2,6 +2,7 @@
     "name": "fetch-douban-info",
     "version": "0.0.1",
     "dependencies": {
-        "urllib": "2.x"
+        "urllib": "2.x",
+        "cheerio": "0.17.x"
     }
 }
