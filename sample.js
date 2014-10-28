@@ -1,4 +1,4 @@
-var fetchMoviePoster = require('../douban').fetchMoviePoster;
+var fetchMoviePoster = require('douban').fetchMoviePoster;
 var fs = require('fs');
 
 fetchMoviePoster("南京", function(data){

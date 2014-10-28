@@ -11,6 +11,13 @@ var fs = require('fs');
 var EventEmitter = require('events').EventEmitter;
 var cheerio = require('cheerio');
 
+function Info(id, mlink, ilink, rating) {
+    this.id = id;
+    this.mlink = mlink;
+    this.ilink = ilink;
+    this.rating = rating;
+}
+
 function retry_request(url, options, times, callback) {
     var count = 0;
     var OK = new EventEmitter();
@@ -44,11 +51,16 @@ Searcher.prototype.search = function(cb) {
         data: {'q': this.query, 'count': 1},
         dataType: 'json'
     }, 3, function(data) {
-        cb(data.subjects[0].id);  // pass back movieid
+        var info = new Info();
+        info.id = data.subjects[0].id;
+        info.mlink = data.subjects[0].alt;
+        info.ilink = data.subjects[0].images.medium;
+        info.rating = data.subjects[0].rating.average;
+        cb(info);  // pass back movieid
     });
 };
 
-function Fetcher(source) {
+function posterFetcher(source) {
     this.source = source;
     this.source_type = (function() {
         if (!isNaN(source)) {  // "123456"
@@ -64,30 +76,28 @@ function Fetcher(source) {
     })();
 }
 
-Fetcher.prototype.fetch = function(callback) {
+posterFetcher.prototype.fetch = function(callback) {
     switch (this.source_type) {
         case "id":
             retry_request("http://movie.douban.com/subject/" + this.source + '/', {}, 3, function (data) {
                 var $ = cheerio.load(data.toString());
                 var img = $('img[src^="http://img3.douban.com/view/movie_poster_cover/spst/public/"]')[0];
-                console.log(img.attribs.src);
                 retry_request(img.attribs.src, {}, 3, function (data) {
-                    callback(data);     // pass back image buffer
+                    callback(data);
                 });
             });
             break;
         case "ilink":
             retry_request(this.source, {}, 3, function (data) {
-                callback(data);     // pass back image buffer
+                callback(data);
             });
             break;
         case "mlink":
             retry_request(this.source, {}, 3, function (data) {
                 var $ = cheerio.load(data.toString());
                 var img = $('img[src^="http://img3.douban.com/view/movie_poster_cover/spst/public/"]')[0];
-                console.log(img.attribs.src);
                 retry_request(img.attribs.src, {}, 3, function (data) {
-                    callback(data);     // pass back image buffer
+                    callback(data);
                 });
             });
             break;
@@ -103,15 +113,17 @@ function fetchMoviePoster(searchText, callback) {
     抓取成功, callback(image_buffer)
      */
     var s = new Searcher(searchText);
-    s.search(function(movieId){
-        if (!movieId) {
+    s.search(function(info){
+        if (!info) {
             callback(null);
         } else {
-            var f = new Fetcher(movieId);
+            var f = new posterFetcher(info.ilink);
             f.fetch(callback);
         }
     });
 }
 
+exports.Searcher = Searcher;
+exports.posterFetcher = posterFetcher;
 exports.fetchMoviePoster = fetchMoviePoster;
 
