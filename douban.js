@@ -48,19 +48,52 @@ Searcher.prototype.search = function(cb) {
     });
 };
 
-function Fetcher(movidId) {
-    this.movieId = movidId;
+function Fetcher(source) {
+    this.source = source;
+    this.source_type = (function() {
+        if (!isNaN(source)) {  // "123456"
+            return "id";
+        } else if (source.indexOf("http://img3.douban.com") === 0) {
+            return "ilink";     // image link
+        } else if (source.indexOf("http://movie.douban.com/subject/") === 0) {
+            return "mlink";     // movie link
+        } else {
+            console.log("wrong type");
+            return null;
+        }
+    })();
 }
 
 Fetcher.prototype.fetch = function(callback) {
-    retry_request("http://movie.douban.com/subject/"+this.movieId+'/', {}, 3, function(data){
-        var $ = cheerio.load(data.toString());
-        var img = $('img[src^="http://img3.douban.com/view/movie_poster_cover/spst/public/"]')[0];
-        console.log(img.attribs.src);
-        retry_request(img.attribs.src, {}, 3, function(data){
-            callback(data);     // pass back image buffer
-        });
-    });
+    switch (this.source_type) {
+        case "id":
+            retry_request("http://movie.douban.com/subject/" + this.source + '/', {}, 3, function (data) {
+                var $ = cheerio.load(data.toString());
+                var img = $('img[src^="http://img3.douban.com/view/movie_poster_cover/spst/public/"]')[0];
+                console.log(img.attribs.src);
+                retry_request(img.attribs.src, {}, 3, function (data) {
+                    callback(data);     // pass back image buffer
+                });
+            });
+            break;
+        case "ilink":
+            retry_request(this.source, {}, 3, function (data) {
+                callback(data);     // pass back image buffer
+            });
+            break;
+        case "mlink":
+            retry_request(this.source, {}, 3, function (data) {
+                var $ = cheerio.load(data.toString());
+                var img = $('img[src^="http://img3.douban.com/view/movie_poster_cover/spst/public/"]')[0];
+                console.log(img.attribs.src);
+                retry_request(img.attribs.src, {}, 3, function (data) {
+                    callback(data);     // pass back image buffer
+                });
+            });
+            break;
+        default :
+            console.log("unknown type");
+    }
 };
 
 function fetchMoviePoster(searchText, callback) {
