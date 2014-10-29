@@ -33,3 +33,12 @@ s.search(function(info){
         });
     }
 });
+
+var s_null = new douban.Searcher('nosuchfilm');
+s_null.search(function(info){
+    if (info === null) {
+        console.log("null test succeed");
+    } else {
+        console.log("null test failed");
+    }
+});

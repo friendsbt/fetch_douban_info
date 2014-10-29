@@ -51,12 +51,16 @@ Searcher.prototype.search = function(cb) {
         data: {'q': this.query, 'count': 1},
         dataType: 'json'
     }, 3, function(data) {
-        var info = new Info();
-        info.id = data.subjects[0].id;
-        info.mlink = data.subjects[0].alt;
-        info.ilink = data.subjects[0].images.medium;
-        info.rating = data.subjects[0].rating.average;
-        cb(info);  // pass back movieid
+        if (data.total > 0) {
+            var info = new Info();
+            info.id = data.subjects[0].id;
+            info.mlink = data.subjects[0].alt;
+            info.ilink = data.subjects[0].images.medium;
+            info.rating = data.subjects[0].rating.average;
+            cb(info);  // pass back movieid
+        } else {
+            cb(null);   // no search result
+        }
     });
 };
 
