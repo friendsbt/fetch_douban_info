@@ -1,3 +1,5 @@
 node_modules
 .idea
-./*.jpg
+*.jpg
+
+!test/poster_nanjing.jpg
