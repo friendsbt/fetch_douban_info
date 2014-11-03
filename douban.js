@@ -64,7 +64,7 @@ Searcher.prototype.search = function(cb) {
     });
 };
 
-function posterFetcher(source) {
+function Fetcher(source) {
     this.source = source;
     this.source_type = (function() {
         if (!isNaN(source)) {  // "123456"
@@ -80,7 +80,7 @@ function posterFetcher(source) {
     })();
 }
 
-posterFetcher.prototype.fetch = function(callback) {
+Fetcher.prototype.fetchPoster = function(callback) {
     switch (this.source_type) {
         case "id":
             retry_request("http://movie.douban.com/subject/" + this.source + '/', {}, 3, function (data) {
@@ -121,13 +121,13 @@ function fetchMoviePoster(searchText, callback) {
         if (!info) {
             callback(null);
         } else {
-            var f = new posterFetcher(info.ilink);
-            f.fetch(callback);
+            var f = new Fetcher(info.ilink);
+            f.fetchPoster(callback);
         }
     });
 }
 
 exports.Searcher = Searcher;
-exports.posterFetcher = posterFetcher;
+exports.Fetcher = Fetcher;
 exports.fetchMoviePoster = fetchMoviePoster;
 

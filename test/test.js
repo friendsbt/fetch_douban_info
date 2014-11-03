@@ -10,22 +10,22 @@ s.search(function(info){
     if (!info) {
         console.log("fail");
     } else {
-        var f1 = new douban.posterFetcher(info.ilink);
-        var f2 = new douban.posterFetcher(info.mlink);
-        var f3 = new douban.posterFetcher(info.id);
-        f1.fetch(function(data){
+        var f1 = new douban.Fetcher(info.ilink);
+        var f2 = new douban.Fetcher(info.mlink);
+        var f3 = new douban.Fetcher(info.id);
+        f1.fetchPoster(function(data){
             if (bufferEqual(data, correct_bytes))
                 console.log("ilink test pass");
             else
                 console.log("ilink test fail");
         });
-        f2.fetch(function(data){
+        f2.fetchPoster(function(data){
             if (bufferEqual(data, correct_bytes))
                 console.log("mlink test pass");
             else
                 console.log("mlink test fail");
         });
-        f3.fetch(function(data){
+        f3.fetchPoster(function(data){
             if (bufferEqual(data, correct_bytes))
                 console.log("id test pass");
             else
