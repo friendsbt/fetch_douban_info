@@ -11,12 +11,6 @@ var fs = require('fs');
 var EventEmitter = require('events').EventEmitter;
 var cheerio = require('cheerio');
 
-function Info(id, mlink, ilink, rating) {
-    this.id = id;
-    this.mlink = mlink;
-    this.ilink = ilink;
-    this.rating = rating;
-}
 
 function retry_request(url, options, times, callback) {
     var count = 0;
@@ -52,8 +46,8 @@ Searcher.prototype.search = function(cb) {
         data: {'q': this.query, 'count': 1},
         dataType: 'json'
     }, 3, function(data) {
-        if (data.total > 0) {
-            var info = new Info();
+        if (data.total) {
+            var info = {};
             info.id = data.subjects[0].id;
             info.mlink = data.subjects[0].alt;
             info.ilink = data.subjects[0].images.medium;
@@ -165,7 +159,25 @@ function fetchMoviePoster(searchText, callback) {
     });
 }
 
+var getInfo = (function(){
+    var s = new Searcher();
+    return function(stext, callback){
+        s.query = stext;
+        s.search(function(sr){
+            var f = new Fetcher(sr.id);
+            f.fetchAll(function(info){
+                info.rating = sr.rating;
+                info.id = sr.id;
+                info.mlink = sr.mlink;
+                info.ilink = sr.ilink;
+                callback(info);
+            });
+        });
+    };
+}());
+
 exports.Searcher = Searcher;
 exports.Fetcher = Fetcher;
 exports.fetchMoviePoster = fetchMoviePoster;
+exports.getInfo = getInfo;
 
