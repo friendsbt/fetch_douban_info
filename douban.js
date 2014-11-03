@@ -21,6 +21,7 @@ function Info(id, mlink, ilink, rating) {
 function retry_request(url, options, times, callback) {
     var count = 0;
     var OK = new EventEmitter();
+    options.followRedirect = true;
     urllib.request(url, options, function cb(err, data, res){
         count++;
         if (count > times) {
@@ -66,12 +67,16 @@ Searcher.prototype.search = function(cb) {
 
 function Fetcher(source) {
     this.source = source;
+    var that = this;
     this.source_type = (function() {
         if (!isNaN(source)) {  // "123456"
             return "id";
         } else if (source.indexOf("http://img3.douban.com") === 0) {
             return "ilink";     // image link
         } else if (source.indexOf("http://movie.douban.com/subject/") === 0) {
+            // last character if mlink must not be slash
+            that.source = that.source.charAt(that.source.length-1) === '/' ?
+                that.source.substr(0, that.source.length-1) : that.source;
             return "mlink";     // movie link
         } else {
             console.log("wrong type");
@@ -79,6 +84,39 @@ function Fetcher(source) {
         }
     })();
 }
+
+Fetcher.prototype.fetchAll = function (callback) {
+    /*
+    * fetch 所有信息, 包括 title, year, countries, summary, comments
+    * 除了comments通过网页抓取, 其它通过movieAPI获取
+     */
+    if (this.source_type !== 'id' && this.source_type !== 'mlink') {
+        console.log("source type should be id or mlink");
+        callback(null);
+    } else {
+        var movie_api_url = "http://api.douban.com/v2/movie/subject/" +
+            (this.source_type === 'mlink' ? this.source.split('/').pop() : this.source);
+        var movie_url = this.source_type === 'mlink' ? this.source :
+            'http://movie.douban.com/subject/' + this.source;
+        console.log(movie_url);
+        retry_request(movie_api_url, {dataType: 'json'}, 3, function(info){
+            retry_request(movie_url, {}, 3, function(page) {
+                var $ = cheerio.load(page.toString());
+                var commentsArray = [];
+                $('div.comment-item > div.comment > p').each(function(i, element){
+                    commentsArray[i] = element.children[0].data.trim();
+                });
+                callback({
+                    'title': info.title,
+                    'year': info.year,
+                    'countries': info.countries,
+                    'summary': info.summary,
+                    'comments': commentsArray
+                });
+            });
+        });
+    }
+};
 
 Fetcher.prototype.fetchPoster = function(callback) {
     switch (this.source_type) {

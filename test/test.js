@@ -31,6 +31,11 @@ s.search(function(info){
             else
                 console.log("id test fail");
         });
+
+        // test fetchAll
+        f3.fetchAll(function(info){
+            console.log(info);
+        });
     }
 });
 
