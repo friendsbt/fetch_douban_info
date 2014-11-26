@@ -46,7 +46,7 @@ Searcher.prototype.search = function(cb) {
         data: {'q': this.query, 'count': 1},
         dataType: 'json'
     }, 3, function(data) {
-        if (data.total) {
+        if (data && data.total) {
             var info = {};
             info.id = data.subjects[0].id;
             info.mlink = data.subjects[0].alt;
@@ -164,14 +164,18 @@ var getInfo = (function(){
     return function(stext, callback){
         s.query = stext;
         s.search(function(sr){
-            var f = new Fetcher(sr.id);
-            f.fetchAll(function(info){
-                info.rating = sr.rating;
-                info.id = sr.id;
-                info.mlink = sr.mlink;
-                info.ilink = sr.ilink;
-                callback(info);
-            });
+            if(sr) {
+                var f = new Fetcher(sr.id);
+                f.fetchAll(function(info){
+                    info.rating = sr.rating;
+                    info.id = sr.id;
+                    info.mlink = sr.mlink;
+                    info.ilink = sr.ilink;
+                    callback(info);
+                });
+            } else {
+                callback(null);
+            }
         });
     };
 }());
