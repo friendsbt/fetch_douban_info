@@ -170,11 +170,15 @@ var getInfo = (function(){
             if(sr) {
                 var f = new Fetcher(sr.id);
                 f.fetchAll(function(info){
-                    info.rating = sr.rating;
-                    info.id = sr.id;
-                    info.mlink = sr.mlink;
-                    info.ilink = sr.ilink;
-                    callback(info);
+                    if(info) {
+                        info.rating = sr.rating;
+                        info.id = sr.id;
+                        info.mlink = sr.mlink;
+                        info.ilink = sr.ilink;
+                        callback(info);
+                    } else {
+                        callback(null);
+                    }
                 });
             } else {
                 callback(null);
