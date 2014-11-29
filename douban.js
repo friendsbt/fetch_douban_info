@@ -95,7 +95,7 @@ Fetcher.prototype.fetchAll = function (callback) {
         console.log(movie_url);
         retry_request(movie_api_url, {dataType: 'json'}, 3, function(info){
             retry_request(movie_url, {}, 3, function(page) {
-                var $ = cheerio.load(page.toString());
+                var $ = cheerio.load(page ? page.toString() : '');
                 var commentsArray = [];
                 $('div.comment-item > div.comment > p').each(function(i, element){
                     commentsArray[i] = element.children[0].data.trim();
