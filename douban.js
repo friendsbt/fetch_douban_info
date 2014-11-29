@@ -94,6 +94,9 @@ Fetcher.prototype.fetchAll = function (callback) {
             'http://movie.douban.com/subject/' + this.source;
         console.log(movie_url);
         retry_request(movie_api_url, {dataType: 'json'}, 3, function(info){
+            if(!info) {
+                return callback(null);
+            }
             retry_request(movie_url, {}, 3, function(page) {
                 var $ = cheerio.load(page ? page.toString() : '');
                 var commentsArray = [];
