@@ -43,7 +43,9 @@ function Searcher(query) {
 
 Searcher.prototype.search = function(cb) {
     retry_request("http://api.douban.com/v2/movie/search", {
-        data: {'q': this.query, 'count': 1},
+        data: exports.apikey
+              ? {'apikey': exports.apikey, 'q': this.query, 'count': 1}
+              : {'q': this.query, 'count': 1},
         dataType: 'json'
     }, 3, function(data) {
         if (data && data.total) {
@@ -93,7 +95,10 @@ Fetcher.prototype.fetchAll = function (callback) {
         var movie_url = this.source_type === 'mlink' ? this.source :
             'http://movie.douban.com/subject/' + this.source;
         console.log(movie_url);
-        retry_request(movie_api_url, {dataType: 'json'}, 3, function(info){
+        retry_request(movie_api_url, 
+            exports.apikey
+            ? {data: exports.apikey, dataType: 'json'}
+            : {dataType: 'json'}, 3, function(info) {
             if(!info) {
                 return callback(null);
             }
@@ -191,4 +196,5 @@ exports.Searcher = Searcher;
 exports.Fetcher = Fetcher;
 exports.fetchMoviePoster = fetchMoviePoster;
 exports.getInfo = getInfo;
+exports.apikey = null;
 

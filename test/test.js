@@ -3,6 +3,9 @@ var path = require('path');
 var bufferEqual = require('buffer-equal');
 var douban = require('../douban');
 
+// config douban apikey
+douban.apikey = 'Your douban apikey';
+
 var correct_bytes = fs.readFileSync(path.join(__dirname, "poster_nanjing.jpg"));
 
 var s = new douban.Searcher("南京南京");
