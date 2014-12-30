@@ -105,7 +105,13 @@ Fetcher.prototype.fetchAll = function (callback) {
                 });
                 callback({
                     'title': info.title,
-                    'year': info.year,
+                    'year': (function normalize(year) {
+                        var begin = year.match(/[12][0-9][0-9][0-9]/);
+                        if(begin && begin >= 0) {
+                            return year.substring(begin, begin+4);
+                        }
+                        return null;
+                    }(info.year)),
                     'countries': info.countries,
                     'summary': info.summary,
                     'comments': commentsArray
