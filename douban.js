@@ -108,7 +108,7 @@ Fetcher.prototype.fetchAll = function (callback) {
                     'year': (function normalize(year) {
                         var begin = year.match(/[12][0-9][0-9][0-9]/);
                         if(begin && begin >= 0) {
-                            return year.substring(begin, begin+4);
+                            return parseInt(year.substring(begin, begin+4));
                         }
                         return null;
                     }(info.year)),
